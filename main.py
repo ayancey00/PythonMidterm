@@ -29,12 +29,6 @@ for r in range(rows):
         grid[r][c] = 1 if random.random() < p_alive else 0
 
 
-# This prints our grid with 1's and 0's
-for row in grid:
-        line = "".join("1" if cell else "." for cell in row)
-        print(line)
-
-
 # now we need the neighbors to be counted
 def count_neighbors(r, c):
     
@@ -73,9 +67,33 @@ ax.set_xticks([])
 ax.set_yticks([])
 
 def animate(frame):
+    
     step()
     img.set_data(grid)
     return (img,)
 
 ani = animation.FuncAnimation(fig, animate, interval=200, blit=True)
+
+# using on_key event to check for keyboard input
+paused = False
+def on_key(event):
+    global paused
+
+    # This checks to see if space and been hit, then it will either stop or start
+    if event.key == " " or event.key == "space":
+        paused = not paused
+
+        if paused:
+            ani.event_source.stop()
+        else:
+            ani.event_source.start()
+
+fig.canvas.mpl_connect("key_press_event", on_key)
+
+
 plt.show()
+
+
+
+
+# Reference --- https://matplotlib.org/stable/api/_as_gen/matplotlib.animation.FuncAnimation.html
