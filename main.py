@@ -10,23 +10,95 @@
 # Need a pause feature
 
 # we need to make it wrap around, when it reaches the left side it wraps over to the right side.
-import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-
 import random
 
-#setup for the grid
-rows, cols = 20, 20
+
+
+def the_rules(rule_str):
+    rule_str = rule_str.strip().upper()
+    
+    # if nothing put, it does the defult conway
+    if rule_str == "":
+        return {3}, {2, 3}  
+
+    # Makes sure it is correct format, 
+    if "B" not in rule_str or "S" not in rule_str:
+        raise ValueError("\n\n\nYou MUST look like B3/S23\n\nTry again")
+
+
+
+# this function makes a preset board. where cells will be alive. 
+# need to find cooler presets!!!
+
+def apply_preset(grid, preset_name):
+    preset_name = preset_name.strip().lower()
+    rows, cols = len(grid), len(grid[0])
+
+    def set_cell(r, c):
+        grid[r % rows][c % cols] = 1
+
+    r0, c0 = rows // 2, cols // 2
+
+    if preset_name == "blinker":
+        set_cell(r0, c0 - 1)
+        set_cell(r0, c0)
+        set_cell(r0, c0 + 1)
+
+    elif preset_name == "block":
+        set_cell(r0, c0)
+        set_cell(r0, c0 + 1)
+        set_cell(r0 + 1, c0)
+        set_cell(r0 + 1, c0 + 1)
+
+    elif preset_name == "glider":
+        set_cell(r0, c0 + 1)
+        set_cell(r0 + 1, c0 + 2)
+        set_cell(r0 + 2, c0)
+        set_cell(r0 + 2, c0 + 1)
+        set_cell(r0 + 2, c0 + 2)
+
+    elif preset_name == "empty":
+        pass  
+
+    # If unknown preset, it kicks them out prompting to try again
+    else:
+        raise ValueError("\n\n\n\nRun program again. You did not pick a correct preset!!\n\n")
+
+
+# This prints a screen for the user to select the type of rules they want
+print("Welcome to cellular atomany!\n Please select the Style you want. \n")
+print("  1) Oringal Conway: B3/S23\n")
+print("  2) HighLife:         B36/S23\n")
+
+rule_in = input("Please Enter rule like ( B3/S23 ): ")
+
+birth, survive = the_rules(rule_in)
+
+print("\n\nNOW, select the starting board you want!\n Type: random, empty, blinker, block, or glider")
+preset = input("\nChoose: ").strip().lower()
+
+
+
+#--------- Code for the acutally game------
+
+
+# setup for the grid
+rows, cols = 75, 75
 grid = [[0 for _ in range(cols)] for _ in range(rows)]
 
-# This is so 25% of cells start alive
-p_alive = 0.25 
 
 #this sets up the board. Giving 25 percent of them life and leaving 75 percent dead.
-for r in range(rows):
-    for c in range(cols):
-        grid[r][c] = 1 if random.random() < p_alive else 0
+if preset == "random":
+    p_alive = 0.25
+    for r in range(rows):
+        for c in range(cols):
+            grid[r][c] = 1 if random.random() < p_alive else 0
+else:
+    # start empty then apply preset
+    apply_preset(grid, preset)
+
 
 
 # now we need the neighbors to be counted
@@ -62,7 +134,7 @@ def step():
 
 #matplotlib visualization 
 fig, ax = plt.subplots()
-img = ax.imshow(grid, cmap="binary", interpolation="nearest")
+img = ax.imshow(grid, cmap="plasma", interpolation="nearest")
 ax.set_xticks([])
 ax.set_yticks([])
 
@@ -72,7 +144,7 @@ def animate(frame):
     img.set_data(grid)
     return (img,)
 
-ani = animation.FuncAnimation(fig, animate, interval=200, blit=True)
+ani = animation.FuncAnimation(fig, animate, interval=50, blit=True)
 
 # using on_key event to check for keyboard input
 paused = False
@@ -96,4 +168,5 @@ plt.show()
 
 
 
-# Reference --- https://matplotlib.org/stable/api/_as_gen/matplotlib.animation.FuncAnimation.html
+# References --- https://matplotlib.org/stable/api/_as_gen/matplotlib.animation.FuncAnimation.html
+# https://realpython.com/conway-game-of-life-python/
