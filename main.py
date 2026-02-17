@@ -10,6 +10,9 @@
 # Need a pause feature
 
 # we need to make it wrap around, when it reaches the left side it wraps over to the right side.
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 
 import random
 
@@ -33,3 +36,46 @@ for row in grid:
 
 
 # now we need the neighbors to be counted
+def count_neighbors(r, c):
+    
+    total = 0
+    for dr in (-1, 0, 1):
+        for dc in (-1, 0, 1):
+            if dr == 0 and dc == 0:
+                continue
+            rr = (r + dr) % rows
+            cc = (c + dc) % cols
+            total += grid[rr][cc]
+    return total
+
+
+def step():
+    
+    global grid
+    new_grid = [[0 for _ in range(cols)] for _ in range(rows)]
+
+    for r in range(rows):
+        for c in range(cols):
+            n = count_neighbors(r, c)
+            if grid[r][c] == 1:
+                new_grid[r][c] = 1 if (n == 2 or n == 3) else 0
+            else:
+                new_grid[r][c] = 1 if n == 3 else 0
+
+    grid = new_grid
+
+
+
+#matplotlib visualization 
+fig, ax = plt.subplots()
+img = ax.imshow(grid, cmap="binary", interpolation="nearest")
+ax.set_xticks([])
+ax.set_yticks([])
+
+def animate(frame):
+    step()
+    img.set_data(grid)
+    return (img,)
+
+ani = animation.FuncAnimation(fig, animate, interval=200, blit=True)
+plt.show()
