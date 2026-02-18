@@ -15,23 +15,7 @@ import matplotlib.animation as animation
 import random
 
 
-
-def the_rules(rule_str):
-    rule_str = rule_str.strip().upper()
-    
-    # if nothing put, it does the defult conway
-    if rule_str == "":
-        return {3}, {2, 3}  
-
-    # Makes sure it is correct format, 
-    if "B" not in rule_str or "S" not in rule_str:
-        raise ValueError("\n\n\nYou MUST look like B3/S23\n\nTry again")
-
-
-
-# this function makes a preset board. where cells will be alive. 
-# need to find cooler presets!!!
-
+# creates the preset cells to be alive.
 def apply_preset(grid, preset_name):
     preset_name = preset_name.strip().lower()
     rows, cols = len(grid), len(grid[0])
@@ -60,28 +44,36 @@ def apply_preset(grid, preset_name):
         set_cell(r0 + 2, c0 + 2)
 
     elif preset_name == "empty":
-        pass  
+        pass
 
-    # If unknown preset, it kicks them out prompting to try again
     else:
-        raise ValueError("\n\n\n\nRun program again. You did not pick a correct preset!!\n\n")
+        raise ValueError("\n\nRun program again. You did not pick a correct preset!!\n")
 
 
-# This prints a screen for the user to select the type of rules they want
-print("Welcome to cellular atomany!\n Please select the Style you want. \n")
-print("  1) Oringal Conway: B3/S23\n")
-print("  2) HighLife:         B36/S23\n")
+# This is where to user will selcet the rules they want.
 
-rule_in = input("Please Enter rule like ( B3/S23 ): ")
+print("Welcome to cellular automata!\nPlease select the rules you want.\n")
+print("  1) Original Conway (1)")
+print("  2) HighLife (2)\n")
 
-birth, survive = the_rules(rule_in)
+while True:
+    rule_choice = input("\nEnter 1 or 2: ").strip()
+    if rule_choice == "1":
+        birth, survive = {3}, {2, 3}      # Conway
+        break
+    elif rule_choice == "2":
+        birth, survive = {3, 6}, {2, 3}   # HighLife
+        break
+    else:
+        print("Please type 1 for Conway or 2 for HighLife.\n")
 
-print("\n\nNOW, select the starting board you want!\n Type: random, empty, blinker, block, or glider")
+
+# ---- PRESET SELECTION ----
+print("\nNOW, select the starting board you want!")
+print("Type: random, empty, blinker, block, or glider")
 preset = input("\nChoose: ").strip().lower()
 
-
-
-#--------- Code for the acutally game------
+#--------- Code for the acutally ga
 
 
 # setup for the grid
@@ -134,7 +126,7 @@ def step():
 
 #matplotlib visualization 
 fig, ax = plt.subplots()
-img = ax.imshow(grid, cmap="plasma", interpolation="nearest")
+img = ax.imshow(grid, cmap="magma", interpolation="nearest")
 ax.set_xticks([])
 ax.set_yticks([])
 
@@ -144,7 +136,7 @@ def animate(frame):
     img.set_data(grid)
     return (img,)
 
-ani = animation.FuncAnimation(fig, animate, interval=50, blit=True)
+ani = animation.FuncAnimation(fig, animate, interval=75, blit=True)
 
 # using on_key event to check for keyboard input
 paused = False
