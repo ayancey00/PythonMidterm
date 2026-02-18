@@ -56,6 +56,7 @@ print("Welcome to cellular automata!\nPlease select the rules you want.\n")
 print("  1) Original Conway (1)")
 print("  2) HighLife (2)\n")
 
+# CHekcing the input and apllying the rules for the neighbors
 while True:
     rule_choice = input("\nEnter 1 or 2: ").strip()
     if rule_choice == "1":
@@ -73,20 +74,19 @@ print("\nNOW, select the starting board you want!")
 print("Type: random, empty, blinker, block, or glider")
 preset = input("\nChoose: ").strip().lower()
 
-#--------- Code for the acutally ga
 
+#--------- Code for the acutally game
 
 # setup for the grid
-rows, cols = 75, 75
+rows, cols = 60, 60
 grid = [[0 for _ in range(cols)] for _ in range(rows)]
-
 
 #this sets up the board. Giving 25 percent of them life and leaving 75 percent dead.
 if preset == "random":
-    p_alive = 0.25
+    cell_alive = 0.25
     for r in range(rows):
         for c in range(cols):
-            grid[r][c] = 1 if random.random() < p_alive else 0
+            grid[r][c] = 1 if random.random() < cell_alive else 0
 else:
     # start empty then apply preset
     apply_preset(grid, preset)
@@ -108,7 +108,6 @@ def count_neighbors(r, c):
 
 
 def step():
-    
     global grid
     new_grid = [[0 for _ in range(cols)] for _ in range(rows)]
 
@@ -116,17 +115,18 @@ def step():
         for c in range(cols):
             n = count_neighbors(r, c)
             if grid[r][c] == 1:
-                new_grid[r][c] = 1 if (n == 2 or n == 3) else 0
+                new_grid[r][c] = 1 if n in survive else 0
             else:
-                new_grid[r][c] = 1 if n == 3 else 0
+                new_grid[r][c] = 1 if n in birth else 0
 
     grid = new_grid
 
 
 
+
 #matplotlib visualization 
 fig, ax = plt.subplots()
-img = ax.imshow(grid, cmap="magma", interpolation="nearest")
+img = ax.imshow(grid, cmap="magma", interpolation="bicubic")
 ax.set_xticks([])
 ax.set_yticks([])
 
@@ -135,7 +135,7 @@ def animate(frame):
     step()
     img.set_data(grid)
     return (img,)
-
+hint_text = fig.text(0.02, 0.98, "To pause, (press spacebar). Quit? (press q)", ha="left", va="top")
 ani = animation.FuncAnimation(fig, animate, interval=75, blit=True)
 
 # using on_key event to check for keyboard input
