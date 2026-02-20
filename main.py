@@ -106,18 +106,24 @@ def stamp_pattern_center(grid, pattern: List[List[int]]):
 print("Welcome to cellular automata!\nPlease select the rules you want.\n")
 print("  1) Original Conway (1)")
 print("  2) HighLife (2)\n")
+print("  3) Custom Rules)\n")
 
 # Checking the input and applying the rules for the neighbors
 while True:
-    rule_choice = input("\nEnter 1 or 2: ").strip()
+    rule_choice = input("\nEnter 1, 2, or 3: ").strip()
     if rule_choice == "1":
         birth, survive = {3}, {2, 3}      # Conway
         break
     elif rule_choice == "2":
         birth, survive = {3, 6}, {2, 3}   # HighLife
         break
+    elif rule_choice == "3":
+        aliv=int(input("How may neighbors must be present to be Born? (type a number 0-6)"))
+        survi=int(input("How many neighbors to survive? (Please type a number 0-6)"))
+        birth, survive = {aliv}, {survi}   #custom 
+        break
     else:
-        print("Please type 1 for Conway or 2 for HighLife.\n")
+        print("Please type 1, 2, or 3.\n")
 
 
 # ---- PRESET SELECTION ----
