@@ -1,4 +1,4 @@
-# Need a 2d grid, Grid[c,r] possiblely.  
+# Need a 2d grid, Grid[c,r] possiblely.
 
 # Each block we refer to as a cell. cell can either be one of zero. Alive or dead
 
@@ -13,6 +13,7 @@
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import random
+from typing import List
 
 
 # creates the preset cells to be alive.
@@ -49,7 +50,7 @@ def apply_preset(grid, preset_name):
     else:
         raise ValueError("\n\nRun program again. You did not pick a correct preset!!\n")
 
-# adding in a txt file 
+
 def load_pattern_from_file(path: str) -> List[List[int]]:
     """
     Load a pattern from a text file.
@@ -87,6 +88,7 @@ def load_pattern_from_file(path: str) -> List[List[int]]:
 
     return pattern
 
+
 def stamp_pattern_center(grid, pattern: List[List[int]]):
     """Center-stamp a smaller pattern onto the main grid."""
     rows, cols = len(grid), len(grid[0])
@@ -100,13 +102,14 @@ def stamp_pattern_center(grid, pattern: List[List[int]]):
             cc = (c0 + pc) % cols
             grid[rr][cc] = 1 if pattern[pr][pc] == 1 else 0
 
-# This is where user will select the rules they want.
+
+# This is where to user will selcet the rules they want.
 
 print("Welcome to cellular automata!\nPlease select the rules you want.\n")
 print("  1) Original Conway (1)")
 print("  2) HighLife (2)\n")
 
-# Checking the input and applying the rules for the neighbors
+# CHekcing the input and apllying the rules for the neighbors
 while True:
     rule_choice = input("\nEnter 1 or 2: ").strip()
     if rule_choice == "1":
@@ -125,32 +128,33 @@ print("Type: random, file, empty, blinker, block, or glider")
 preset = input("\nChoose: ").strip().lower()
 
 
-#--------- Code for the actual game
+#--------- Code for the acutally game
 
 # setup for the grid
 rows, cols = 60, 60
 grid = [[0 for _ in range(cols)] for _ in range(rows)]
 
-#this sets up the board. Giving 25 percent of them life and leaving 75 percent dead.
+# this sets up the board. Giving 25 percent of them life and leaving 75 percent dead.
 if preset == "random":
     cell_alive = 0.25
     for r in range(rows):
         for c in range(cols):
             grid[r][c] = 1 if random.random() < cell_alive else 0
+
 elif preset == "file":
     path = input("Enter the pattern file path (example: pattern.txt): ").strip()
     pattern = load_pattern_from_file(path)
     # start empty then stamp pattern
     stamp_pattern_center(grid, pattern)
+
 else:
     # start empty then apply preset
     apply_preset(grid, preset)
 
 
-
 # now we need the neighbors to be counted
 def count_neighbors(r, c):
-    
+
     total = 0
     for dr in (-1, 0, 1):
         for dc in (-1, 0, 1):
@@ -177,42 +181,108 @@ def step():
     grid = new_grid
 
 
-
-
-#matplotlib visualization 
+# matplotlib visualization
 fig, ax = plt.subplots()
 img = ax.imshow(grid, cmap="magma", interpolation="bicubic")
 ax.set_xticks([])
 ax.set_yticks([])
 
+# --- NEW: initial editing mode ---
+# Click to toggle cells BEFORE starting evolution.
+started = False
+paused = True  # start paused so user can edit initial state
+
+hint_text = fig.text(
+    0.02, 0.98,
+    "Edit mode: click cells to toggle | Start: s | Pause/Resume: space | Quit: q",
+    ha="left", va="top"
+)
+
 def animate(frame):
-    
-    step()
-    img.set_data(grid)
+    # Only evolve after user presses 's' and not paused
+    if started and (not paused):
+        step()
+        img.set_data(grid)
     return (img,)
-hint_text = fig.text(0.02, 0.98, "To pause, (press spacebar). Quit? (press q)", ha="left", va="top")
+
 ani = animation.FuncAnimation(fig, animate, interval=75, blit=True)
 
-# using on_key event to check for keyboard input
-paused = False
-def on_key(event):
-    global paused
+# stop immediately (we'll start the event source when user presses s)
+ani.event_source.stop()
 
-    # This checks to see if space and been hit, then it will either stop or start
+def on_click(event):
+    # Toggle the clicked cell while not started (initial state editing)
+    global grid
+    if event.inaxes != ax:
+        return
+    if started:
+        return
+
+    # event.xdata/ydata are in data coordinates; convert to int indices
+    if event.xdata is None or event.ydata is None:
+        return
+
+    c = int(event.xdata)
+    r = int(event.ydata)
+
+    if 0 <= r < rows and 0 <= c < cols:
+        grid[r][c] = 0 if grid[r][c] == 1 else 1
+        img.set_data(grid)
+        fig.canvas.draw_idle()
+
+def on_key(event):
+    global paused, started, grid
+
+    # Quit
+    if event.key in ("q", "escape"):
+        plt.close(fig)
+        return
+
+    # Start evolution
+    if event.key == "s":
+        if not started:
+            started = True
+            paused = False
+            ani.event_source.start()
+            hint_text.set_text("Running: space = pause/resume | Quit: q")
+            fig.canvas.draw_idle()
+        return
+
+    # Pause / resume (only meaningful after started, but harmless either way)
     if event.key == " " or event.key == "space":
         paused = not paused
+        if started:
+            if paused:
+                ani.event_source.stop()
+                hint_text.set_text("Paused: space = resume | Quit: q")
+            else:
+                ani.event_source.start()
+                hint_text.set_text("Running: space = pause | Quit: q")
+            fig.canvas.draw_idle()
+        return
 
-        if paused:
-            ani.event_source.stop()
-        else:
-            ani.event_source.start()
+    # Optional: clear while editing
+    if (event.key == "c") and (not started):
+        grid = [[0 for _ in range(cols)] for _ in range(rows)]
+        img.set_data(grid)
+        fig.canvas.draw_idle()
+        return
 
+    # Optional: randomize while editing
+    if (event.key == "r") and (not started):
+        cell_alive = 0.25
+        for rr in range(rows):
+            for cc in range(cols):
+                grid[rr][cc] = 1 if random.random() < cell_alive else 0
+        img.set_data(grid)
+        fig.canvas.draw_idle()
+        return
+
+
+fig.canvas.mpl_connect("button_press_event", on_click)
 fig.canvas.mpl_connect("key_press_event", on_key)
 
-
 plt.show()
-
-
 
 
 # References --- https://matplotlib.org/stable/api/_as_gen/matplotlib.animation.FuncAnimation.html
